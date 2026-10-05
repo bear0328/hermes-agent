@@ -280,8 +280,13 @@ def _fire_warmup_sync(gateway: Any, *, source: Any, session_key: str, session_en
         # build_api_messages reads the turn's frozen expiry clock; outside a turn it must
         # be stamped here (every real turn re-stamps it in _reset_per_turn_agent_state).
         agent._current_turn_timestamp = time.time()
+        # There is no current turn: current_turn_user_idx marks the freshly appended user
+        # message in a real turn (live injection + context-engine incoming_message), and the
+        # next real turn will treat every transcript row as historical replay. One past the
+        # end selects "no current turn" in both consumers (their range guards), so all rows
+        # replay their api_content sidecars byte-exactly like the real next turn's prefix.
         assembled = assemble_api_request(
-            agent, messages=agent_history, current_turn_user_idx=None,
+            agent, messages=agent_history, current_turn_user_idx=len(agent_history),
             _ext_prefetch_cache=None, _plugin_user_context=None, moa_config=None,
             active_system_prompt=agent._cached_system_prompt, original_user_message=None,
             pending_moa_prepared_request=None, request_logger=logger,
