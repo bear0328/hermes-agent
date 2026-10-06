@@ -98,6 +98,12 @@ custom = CustomProfile(
     base_url="",  # User-configured
     # An arbitrary client ceiling can exceed a local server's actual output limit.
     # The endpoint owns its generation default.
+    # oMLX (:8085) accepts tool-role image parts without a 400 but silently drops the
+    # pixels — the model only sees the envelope's text placeholder (2026-10-06 local
+    # token-delta proof: vision_analyze native fast path added +218 prompt tokens
+    # instead of ~1-2K vision tokens). Veto the fast path so vision_analyze falls
+    # back to the aux-LLM call with the image in a user message, which oMLX honors.
+    supports_vision_tool_messages=False,
 )
 
 register_provider(custom)
